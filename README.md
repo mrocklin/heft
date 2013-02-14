@@ -3,6 +3,11 @@ Heterogeneous Earliest Finish Time
 
 A static scheduling heuristic for heterogeneous hardware
 
+Install
+-------
+
+    pip install heft
+
 References
 ----------
 
