@@ -41,7 +41,13 @@ def cbar(ni, nj, agents, commcost):
                                         if a1 != a2) / npairs
 
 def ranku(ni, agents, succ,  compcost, commcost):
-    """ Rank of job """
+    """ Rank of job
+
+    This code is designed to mirror the wikipedia entry.
+    Please see that for details
+
+    [1]. http://en.wikipedia.org/wiki/Heterogeneous_Earliest_Finish_Time
+    """
     rank = partial(ranku, compcost=compcost, commcost=commcost,
                            succ=succ, agents=agents)
     w = partial(wbar, compcost=compcost, agents=agents)
@@ -52,7 +58,8 @@ def ranku(ni, agents, succ,  compcost, commcost):
     else:
         return w(ni)
 
-def ready_to_send(job, events):
+def endtime(job, events):
+    """ Endtime of job in list of events """
     for e in events:
         if e.job == job:
             return e.end
@@ -61,7 +68,7 @@ def start_time(job, agentstate, jobstate, prec, commcost, agent):
     """ Earliest time that job can be executed on agent """
     agent_ready = agentstate[agent][-1].end if agentstate[agent] else 0
     if job in prec:
-        comm_ready = max(ready_to_send(p, agentstate[jobstate[p]])
+        comm_ready = max(endtime(p, agentstate[jobstate[p]])
                    + commcost(p, job, agent, jobstate[p]) for p in prec[job])
     else:
         comm_ready = 0
@@ -87,6 +94,15 @@ def makespan(agentstate):
     return max(v[-1].end for v in agentstate.values() if v)
 
 def schedule(succ, agents, compcost, commcost):
+    """ Schedule computation dag onto worker agents
+
+    inputs:
+
+    succ - DAG of tasks {a: (b, c)} where b, and c follow a
+    agents - set of agents that can perform work
+    compcost - function :: job, agent -> runtime
+    commcost - function :: j1, j2, a1, a2 -> communication time
+    """
     rank = partial(ranku, agents=agents, succ=succ,
                           compcost=compcost, commcost=commcost)
     prec = reverse_dict(succ)

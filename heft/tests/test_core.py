@@ -1,5 +1,5 @@
 from heft.core import (wbar, cbar, ranku, schedule, Event, start_time,
-        makespan, ready_to_send)
+        makespan, endtime)
 from functools import partial
 
 def compcost(job, agent):
@@ -63,7 +63,7 @@ def test_makespan():
     assert makespan({'a': [Event(0, 0, 1), Event(1, 2, 3)],
                      'b': [Event(2, 3, 4)]}) == 4
 
-def test_ready_to_send():
+def test_endtime():
     events = [Event(0, 1, 2), Event(1, 2, 3), Event(2, 3, 4)]
-    assert ready_to_send(0, events) == 2
-    assert ready_to_send(1, events) == 3
+    assert endtime(0, events) == 2
+    assert endtime(1, events) == 3

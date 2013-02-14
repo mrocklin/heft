@@ -2,7 +2,7 @@ from os.path import exists
 from setuptools import setup
 
 setup(name='heft',
-      version='0.1',
+      version='0.1.1',
       description='A static scheduling heuristic',
       url='http://github.com/mroclin/heft',
       author='Matthew Rocklin',
