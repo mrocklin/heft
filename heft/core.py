@@ -52,33 +52,32 @@ def ranku(ni, agents, succ,  compcost, commcost):
     else:
         return w(ni)
 
-def agent_ready_time(agent, agentstate):
-    if not agentstate[agent]:
-        return 0
-    else:
-        return agentstate[agent][-1].end
+def ready_to_send(job, events):
+    for e in events:
+        if e.job == job:
+            return e.end
 
-def earliest_finish_time(job, agentstate, jobstate, prec, compcost,
-        commcost, agent):
+def start_time(job, agentstate, jobstate, prec, commcost, agent):
     """ Earliest time that job can be executed on agent """
-    agent_ready = agent_ready_time(agent, agentstate)
+    agent_ready = agentstate[agent][-1].end if agentstate[agent] else 0
     if job in prec:
-        comm_ready = max(agent_ready_time(agent, agentstate)
+        comm_ready = max(ready_to_send(p, agentstate[jobstate[p]])
                    + commcost(p, job, agent, jobstate[p]) for p in prec[job])
     else:
         comm_ready = 0
-    return max(agent_ready, comm_ready) + compcost(job, agent)
+    return max(agent_ready, comm_ready)
 
 def allocate(job, agentstate, jobstate, prec, compcost, commcost):
     """ Allocate job to the machine with earliest finish time
 
     Operates in place
     """
-    eft = partial(earliest_finish_time, job, agentstate, jobstate, prec,
-            compcost, commcost)
-    agent = min(agentstate.keys(), key=eft)
-    end = eft(agent)
-    start = end - compcost(job, agent)
+    st = partial(start_time, job, agentstate, jobstate, prec, commcost)
+    ft = lambda machine: st(machine) + compcost(job, machine)
+
+    agent = min(agentstate.keys(), key=ft)
+    start = st(agent)
+    end = ft(agent)
 
     agentstate[agent].append(Event(job, start, end))
     jobstate[job] = agent
