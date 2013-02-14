@@ -1,6 +1,8 @@
 from heft.core import (wbar, cbar, ranku, schedule, Event, start_time,
-        makespan, endtime)
+        makespan, endtime, recvs, recv, send, sends, insert_recvs,
+        insert_sends, insert_sendrecvs)
 from functools import partial
+from heft.util import reverse_dict
 
 def compcost(job, agent):
     if agent.islower():
@@ -73,3 +75,55 @@ def test_endtime():
     events = [Event(0, 1, 2), Event(1, 2, 3), Event(2, 3, 4)]
     assert endtime(0, events) == 2
     assert endtime(1, events) == 3
+
+def test_recvs():
+    jobson = {1: 'a', 2: 'b', 3: 'a'}
+    prec = {3: (1, 2)}
+    assert recvs(1, jobson, prec) == []
+    assert recvs(3, jobson, prec) == [recv('b', 'a', 2, 3)]
+
+def test_sends():
+    jobson = {1: 'a', 2: 'b', 3: 'a'}
+    succ = {1: (3, 2)}
+    assert sends(1, jobson, succ) == [send('a', 'b', 1, 2)]
+    assert sends(3, jobson, succ) == []
+
+def test_insert_recvs():
+    jobson = {1: 'a', 2: 'b', 3: 'a'}
+    prec = {3: (1, 2)}
+    aorder = [Event(1, 0, 2), Event(3, 3, 5)]
+    result = insert_recvs(aorder, jobson, prec)
+    assert result[0] == aorder[0]
+    assert result[-1] == aorder[-1]
+    assert result[1].job == recv('b', 'a', 2, 3)
+    assert jobson[recv('b', 'a', 2, 3)] == 'a'
+
+    assert insert_recvs([], jobson, prec) == []
+
+def test_insert_sends():
+    jobson = {1: 'a', 2: 'b', 3: 'a'}
+    succ = {1: (3, 2)}
+    aorder = [Event(1, 0, 2), Event(3, 3, 5)]
+    result = insert_sends(aorder, jobson, succ)
+    assert result[0] == aorder[0]
+    assert result[-1] == aorder[-1]
+    assert result[1].job == send('a', 'b', 1, 2)
+    assert jobson[send('a', 'b', 1, 2)] == 'a'
+
+    assert insert_sends([], jobson, succ) == []
+
+def test_insert_sendrecvs():
+    prec = {3: (1, 2),
+            2: (1,)}
+    succ = reverse_dict(prec)
+    jobson = {1: 'a', 2: 'b', 3: 'a'}
+    orders = {'a': [Event(1, 0, 1), Event(3, 4, 8)],
+              'b': [Event(2, 2, 3)]}
+
+    neworders, newjobson = insert_sendrecvs(orders, jobson, succ)
+    print neworders
+    print newjobson
+    assert Event(send('a', 'b', 1, 2), 1, 1) in neworders['a']
+    assert Event(recv('a', 'b', 1, 2), 2, 2) in neworders['b']
+    assert all(e in neworders[agent] for agent in orders
+                                     for e in orders[agent])

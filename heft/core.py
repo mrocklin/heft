@@ -116,3 +116,71 @@ def schedule(succ, agents, compcost, commcost):
         allocate(job, orders, jobson, prec, compcost, commcost)
 
     return orders, jobson
+
+def recv(fromagent, toagent, fromjob, tojob):
+    return ('recv', fromjob, tojob, fromagent, toagent)
+def recvs(job, jobson, prec, recv=recv):
+    """ Collect all necessary recvs for job """
+    if job not in prec:
+        return []
+    return [recv(jobson[p], jobson[job], p, job) for p in prec[job]
+                if jobson[p] != jobson[job]]
+
+def send(fromagent, toagent, fromjob, tojob):
+    return ('send', fromjob, tojob, fromagent, toagent)
+def sends(job, jobson, succ, send=send):
+    """ Collect all necessary sends for job """
+    if job not in succ:
+        return []
+    return [send(jobson[job], jobson[s], job, s) for s in succ[job]
+                if jobson[s] != jobson[job]]
+
+eps = 1e-9
+def insert_recvs(order, jobson, prec, recv=recv):
+    if not order:
+        return order
+
+    thisagent = jobson[order[0].job]
+
+    receives = partial(recvs, jobson=jobson, prec=prec, recv=recv)
+    recv_events = {e.job: [Event(r, e.start, e.start)
+                                    for r in receives(e.job)]
+                          for e in order}
+
+    for job, revents in recv_events.items():
+        i = [e.job for e in order].index(job)
+        order = order[:i] + revents + order[i:]
+
+    jobson.update({e.job: thisagent for es in recv_events.values() for e in es})
+
+    return order
+
+def insert_sends(order, jobson, succ, send=send):
+    if not order:
+        return order
+
+    thisagent = jobson[order[0].job]
+
+    sends2 = partial(sends, jobson=jobson, succ=succ, send=send)
+    send_events = {e.job: [Event(s, e.end, e.end)
+                                    for s in sends2(e.job)]
+                          for e in order}
+
+    for job, sevents in send_events.items():
+        i = [e.job for e in order].index(job)
+        order = order[:i+1] + sevents + order[i+1:]
+
+    jobson.update({e.job: thisagent for es in send_events.values() for e in es})
+
+    return order
+
+def insert_sendrecvs(orders, jobson, succ, send=send, recv=recv):
+    """ Insert send an recv events into the orders at approprate places """
+    prec = reverse_dict(succ)
+    jobson = jobson.copy()
+    neworders = dict()
+    for agent, order in orders.items():
+        order = insert_sends(order, jobson, succ, send)
+        order = insert_recvs(order, jobson, prec, recv)
+        neworders[agent] = order
+    return neworders, jobson
