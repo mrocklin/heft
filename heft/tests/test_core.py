@@ -47,23 +47,23 @@ def test_ranku():
 
 
 def test_earliest_finish_time():
-    agentstate = {'a': [Event(2, 0, 3)], 'b': []}
-    jobstate = {2: 'a'}
+    orders = {'a': [Event(2, 0, 3)], 'b': []}
+    jobson = {2: 'a'}
     prec = {3: (2,)}
-    assert start_time(3, agentstate, jobstate, prec, commcost, 'a') == 3
-    assert start_time(3, agentstate, jobstate, prec, commcost, 'b') == 3 + 3
+    assert start_time(3, orders, jobson, prec, commcost, 'a') == 3
+    assert start_time(3, orders, jobson, prec, commcost, 'b') == 3 + 3
 
 def test_schedule():
-    agentstate, jobstate = schedule(dag, 'abc', compcost, commcost)
-    a = jobstate[4]
-    b = jobstate[3]
+    orders, jobson = schedule(dag, 'abc', compcost, commcost)
+    a = jobson[4]
+    b = jobson[3]
     c = (set('abc') - set((a, b))).pop()
     print a, b, c
-    print agentstate
-    assert agentstate == {a: [Event(4, 0, 4), Event(6, 4, 10),
-                              Event(7, 11, 18), Event(9, 18, 27)],
-                          b: [Event(3, 0, 3), Event(5, 3, 8), Event(8, 21, 29)],
-                          c: []}
+    print orders
+    assert orders == {a: [Event(4, 0, 4), Event(6, 4, 10),
+                          Event(7, 11, 18), Event(9, 18, 27)],
+                      b: [Event(3, 0, 3), Event(5, 3, 8), Event(8, 21, 29)],
+                      c: []}
 
 def test_makespan():
     assert makespan({'a': [Event(0, 0, 1), Event(1, 2, 3)],
