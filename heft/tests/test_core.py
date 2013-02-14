@@ -40,6 +40,12 @@ def test_ranku():
     assert rank(7) == w(7) + c(7, 9) + rank(9)
     assert sorted((3,4,5,6,7,8,9), key=rank) == [4, 3, 6, 5, 7, 9, 8][::-1]
 
+    d = {3: ()}
+    rank = partial(ranku, agents='abc', commcost=commcost, compcost=compcost,
+            succ=d)
+    assert rank(3) == compcost(3, 'a')
+
+
 def test_earliest_finish_time():
     agentstate = {'a': [Event(2, 0, 3)], 'b': []}
     jobstate = {2: 'a'}

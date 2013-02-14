@@ -53,7 +53,7 @@ def ranku(ni, agents, succ,  compcost, commcost):
     w = partial(wbar, compcost=compcost, agents=agents)
     c = partial(cbar, agents=agents, commcost=commcost)
 
-    if ni in succ:
+    if ni in succ and succ[ni]:
         return w(ni) + max(c(ni, nj) + rank(nj) for nj in succ[ni])
     else:
         return w(ni)
