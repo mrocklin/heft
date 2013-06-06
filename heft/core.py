@@ -117,18 +117,15 @@ def schedule(succ, agents, compcost, commcost):
 
     return orders, jobson
 
-def recv(fromagent, toagent, fromjob, tojob):
-    return ('recv', fromjob, tojob, fromagent, toagent)
-def recvs(job, jobson, prec, recv=recv):
+
+def recvs(job, jobson, prec, recv):
     """ Collect all necessary recvs for job """
     if job not in prec:
         return []
     return [recv(jobson[p], jobson[job], p, job) for p in prec[job]
                 if jobson[p] != jobson[job]]
 
-def send(fromagent, toagent, fromjob, tojob):
-    return ('send', fromjob, tojob, fromagent, toagent)
-def sends(job, jobson, succ, send=send):
+def sends(job, jobson, succ, send):
     """ Collect all necessary sends for job """
     if job not in succ:
         return []
@@ -136,7 +133,7 @@ def sends(job, jobson, succ, send=send):
                 if jobson[s] != jobson[job]]
 
 eps = 1e-9
-def insert_recvs(order, jobson, prec, recv=recv):
+def insert_recvs(order, jobson, prec, recv):
     if not order:
         return order
 
@@ -155,7 +152,7 @@ def insert_recvs(order, jobson, prec, recv=recv):
 
     return order
 
-def insert_sends(order, jobson, succ, send=send):
+def insert_sends(order, jobson, succ, send):
     if not order:
         return order
 
@@ -174,7 +171,7 @@ def insert_sends(order, jobson, succ, send=send):
 
     return order
 
-def insert_sendrecvs(orders, jobson, succ, send=send, recv=recv):
+def insert_sendrecvs(orders, jobson, succ, send, recv):
     """ Insert send an recv events into the orders at approprate places """
     prec = reverse_dict(succ)
     jobson = jobson.copy()

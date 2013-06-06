@@ -1,6 +1,6 @@
 from heft.core import (wbar, cbar, ranku, schedule, Event, start_time,
-        makespan, endtime, recvs, recv, send, sends, insert_recvs,
-        insert_sends, insert_sendrecvs)
+        makespan, endtime, insert_recvs, insert_sends, insert_sendrecvs, recvs,
+        sends)
 from functools import partial
 from heft.util import reverse_dict
 
@@ -23,6 +23,13 @@ dag = {3: (5,),
        5: (7,),
        6: (7,),
        7: (8, 9)}
+
+def recv(fromagent, toagent, fromjob, tojob):
+    return ('recv', fromjob, tojob, fromagent, toagent)
+
+def send(fromagent, toagent, fromjob, tojob):
+    return ('send', fromjob, tojob, fromagent, toagent)
+
 
 def test_wbar():
     assert wbar(1, 'abc', compcost) == 1
@@ -79,38 +86,38 @@ def test_endtime():
 def test_recvs():
     jobson = {1: 'a', 2: 'b', 3: 'a'}
     prec = {3: (1, 2)}
-    assert recvs(1, jobson, prec) == []
-    assert recvs(3, jobson, prec) == [recv('b', 'a', 2, 3)]
+    assert recvs(1, jobson, prec, recv) == []
+    assert recvs(3, jobson, prec, recv) == [recv('b', 'a', 2, 3)]
 
 def test_sends():
     jobson = {1: 'a', 2: 'b', 3: 'a'}
     succ = {1: (3, 2)}
-    assert sends(1, jobson, succ) == [send('a', 'b', 1, 2)]
-    assert sends(3, jobson, succ) == []
+    assert sends(1, jobson, succ, send) == [send('a', 'b', 1, 2)]
+    assert sends(3, jobson, succ, send) == []
 
 def test_insert_recvs():
     jobson = {1: 'a', 2: 'b', 3: 'a'}
     prec = {3: (1, 2)}
     aorder = [Event(1, 0, 2), Event(3, 3, 5)]
-    result = insert_recvs(aorder, jobson, prec)
+    result = insert_recvs(aorder, jobson, prec, recv)
     assert result[0] == aorder[0]
     assert result[-1] == aorder[-1]
     assert result[1].job == recv('b', 'a', 2, 3)
     assert jobson[recv('b', 'a', 2, 3)] == 'a'
 
-    assert insert_recvs([], jobson, prec) == []
+    assert insert_recvs([], jobson, prec, recv) == []
 
 def test_insert_sends():
     jobson = {1: 'a', 2: 'b', 3: 'a'}
     succ = {1: (3, 2)}
     aorder = [Event(1, 0, 2), Event(3, 3, 5)]
-    result = insert_sends(aorder, jobson, succ)
+    result = insert_sends(aorder, jobson, succ, send)
     assert result[0] == aorder[0]
     assert result[-1] == aorder[-1]
     assert result[1].job == send('a', 'b', 1, 2)
     assert jobson[send('a', 'b', 1, 2)] == 'a'
 
-    assert insert_sends([], jobson, succ) == []
+    assert insert_sends([], jobson, succ, send) == []
 
 def test_insert_sendrecvs():
     prec = {3: (1, 2),
@@ -120,7 +127,7 @@ def test_insert_sendrecvs():
     orders = {'a': [Event(1, 0, 1), Event(3, 4, 8)],
               'b': [Event(2, 2, 3)]}
 
-    neworders, newjobson = insert_sendrecvs(orders, jobson, succ)
+    neworders, newjobson = insert_sendrecvs(orders, jobson, succ, send, recv)
     print neworders
     print newjobson
     assert Event(send('a', 'b', 1, 2), 1, 1) in neworders['a']
