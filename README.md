@@ -18,3 +18,9 @@ License
 -------
 
 BSD style.  See LICENSE.txt
+
+
+Author
+------
+
+[Matthew Rocklin](http://matthewrocklin.com/)
