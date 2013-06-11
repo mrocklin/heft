@@ -15,7 +15,7 @@ job - the job to be allocated
 orders - dict {agent: [jobs-run-on-agent-in-order]}
 jobson - dict {job: agent-on-which-job-is-run}
 prec - dict {job: (jobs which directly precede job)}
-prec - dict {job: (jobs which directly succeed job)}
+succ - dict {job: (jobs which directly succeed job)}
 compcost - function :: job, agent -> time to compute job on agent
 commcost - function :: job, job, agent, agent -> time to transfer results
                        of one job needed by another between two agents
