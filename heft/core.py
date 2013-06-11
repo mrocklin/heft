@@ -68,8 +68,8 @@ def start_time(job, orders, jobson, prec, commcost, agent):
     """ Earliest time that job can be executed on agent """
     agent_ready = orders[agent][-1].end if orders[agent] else 0
     if job in prec:
-        comm_ready = max(endtime(p, orders[jobson[p]])
-                       + commcost(p, job, agent, jobson[p]) for p in prec[job])
+        comm_ready = max([endtime(p, orders[jobson[p]])
+                       + commcost(p, job, agent, jobson[p]) for p in prec[job]])
     else:
         comm_ready = 0
     return max(agent_ready, comm_ready)
