@@ -134,3 +134,9 @@ def test_insert_sendrecvs():
     assert Event(recv('a', 'b', 1, 2), 2, 2) in neworders['b']
     assert all(e in neworders[agent] for agent in orders
                                      for e in orders[agent])
+
+def test_one_agent():
+    orders, jobson = schedule(dag, ['A'], compcost, commcost)
+    assert orders.keys() == ['A']
+    assert set(e.job for e in orders['A']) == set((3,4,5,6,7,8,9))
+    assert jobson == {i: 'A' for i in (3,4,5,6,7,8,9)}

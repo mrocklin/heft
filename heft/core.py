@@ -36,6 +36,8 @@ def wbar(ni, agents, compcost):
 def cbar(ni, nj, agents, commcost):
     """ Average communication cost """
     n = len(agents)
+    if n == 1:
+        return 0
     npairs = n * (n-1)
     return 1. * sum(commcost(ni, nj, a1, a2) for a1 in agents for a2 in agents
                                         if a1 != a2) / npairs
