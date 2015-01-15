@@ -65,8 +65,8 @@ def test_earliest_finish_time():
     orders = {'a': [Event(2, 0, 3)], 'b': []}
     jobson = {2: 'a'}
     prec = {3: (2,)}
-    assert start_time(3, orders, jobson, prec, commcost, 'a') == 3
-    assert start_time(3, orders, jobson, prec, commcost, 'b') == 3 + 3
+    assert start_time(3, orders, jobson, prec, commcost, compcost, 'a') == 3
+    assert start_time(3, orders, jobson, prec, commcost, compcost, 'b') == 3 + 3
 
 def test_schedule():
     orders, jobson = schedule(dag, 'abc', compcost, commcost)

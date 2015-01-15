@@ -66,22 +66,38 @@ def endtime(job, events):
         if e.job == job:
             return e.end
 
-def start_time(job, orders, jobson, prec, commcost, agent):
+def find_first_gap(agent_orders, desired_start_time, duration):
+
+    # No jobs: can fit it in whenever the job is ready to run
+    if (agent_orders is None) or (len(agent_orders)) == 0:
+        return desired_start_time;
+
+    # Try to fit it in before any other jobs start
+    if (agent_orders[0].start - desired_start_time) > duration:
+        return desired_start_time
+
+    # No gaps found: put it at the end, or whenever the task is ready
+    return max(agent_orders[-1].end, desired_start_time)
+
+def start_time(job, orders, jobson, prec, commcost, compcost, agent):
     """ Earliest time that job can be executed on agent """
-    agent_ready = orders[agent][-1].end if orders[agent] else 0
+
+    duration = compcost(job, agent)
+
     if job in prec:
         comm_ready = max([endtime(p, orders[jobson[p]])
                        + commcost(p, job, agent, jobson[p]) for p in prec[job]])
     else:
         comm_ready = 0
-    return max(agent_ready, comm_ready)
+
+    return find_first_gap(orders[agent], comm_ready, duration)
 
 def allocate(job, orders, jobson, prec, compcost, commcost):
     """ Allocate job to the machine with earliest finish time
 
     Operates in place
     """
-    st = partial(start_time, job, orders, jobson, prec, commcost)
+    st = partial(start_time, job, orders, jobson, prec, commcost, compcost)
     ft = lambda machine: st(machine) + compcost(job, machine)
 
     agent = min(orders.keys(), key=ft)
