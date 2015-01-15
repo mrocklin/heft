@@ -174,7 +174,10 @@ def test_task_insertion_in_middle():
 
     orders, _ = schedule(dag, 'ab', compcost, zero_commcost)
 
+    print orders
+    print find_job_event(2, orders)
+
     # Both of the cheap tasks (1 and 2) should be done on the second
     # processor while we are waiting for task 9 to finish on the first one
-    assert find_job_event(1, orders).end == 1
-    assert find_job_event(2, orders).end == 3
+    assert find_job_event(1, orders).end == 3
+    assert find_job_event(2, orders).end == 2

@@ -26,6 +26,7 @@ commcost - function :: job, job, agent, agent -> time to transfer results
 from functools import partial
 from collections import namedtuple
 from util import reverse_dict
+from itertools import chain
 
 Event = namedtuple('Event', 'job start end')
 
@@ -67,14 +68,24 @@ def endtime(job, events):
             return e.end
 
 def find_first_gap(agent_orders, desired_start_time, duration):
+    """Find the first gap in an agent's list of jobs
+
+    The gap must be after `desired_start_time` and of length at least
+    `duration`.
+    """
 
     # No jobs: can fit it in whenever the job is ready to run
     if (agent_orders is None) or (len(agent_orders)) == 0:
         return desired_start_time;
 
-    # Try to fit it in before any other jobs start
-    if (agent_orders[0].start - desired_start_time) > duration:
-        return desired_start_time
+    # Try to fit it in between each pair of Events, but first prepend a
+    # dummy Event which ends at time 0 to check for gaps before any real
+    # Event starts.
+    a = chain([Event(None,None,0)], agent_orders[:-1])
+    for e1, e2 in zip(a, agent_orders):
+        earliest_start = max(desired_start_time, e1.end)
+        if e2.start - earliest_start > duration:
+            return earliest_start
 
     # No gaps found: put it at the end, or whenever the task is ready
     return max(agent_orders[-1].end, desired_start_time)
@@ -105,6 +116,10 @@ def allocate(job, orders, jobson, prec, compcost, commcost):
     end = ft(agent)
 
     orders[agent].append(Event(job, start, end))
+    orders[agent] = sorted(orders[agent], key=lambda e: e.start)
+    # Might be better to use a different data structure to keep each
+    # agent's orders sorted at a lower cost.
+
     jobson[job] = agent
 
 def makespan(orders):
