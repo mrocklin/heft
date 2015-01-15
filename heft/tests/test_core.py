@@ -19,6 +19,11 @@ def commcost(ni, nj, A, B):
     else:
         return 6
 
+def zero_commcost(ni, nj, A, B):
+    """A free commmunication cost function, useful in some tests for simplicity
+    """
+    return 0
+
 dag = {3: (5,),
        4: (6,),
        5: (7,),
@@ -143,18 +148,29 @@ def test_one_agent():
     assert jobson == {i: 'A' for i in (3,4,5,6,7,8,9)}
 
 
-def test_task_insertion():
+def test_task_insertion_at_start():
     dag = {9: (10, 11), # some very high rank tasks which all depend on one
            10: (),      # initial task.
            11: (),
 
-           1: (), # some low rank but cheap tasks
-           2: (),
+           1: (), # one low rank but cheap tasks
           }
 
-    # No communication cost for simplicity
-    def zero_commcost(ni, nj, A, B):
-        return 0
+    orders, _ = schedule(dag, 'ab', compcost, zero_commcost)
+
+    # The cheap task 1 should be done on the spare processor while we are
+    # waiting for task 9 to finish on the first one.
+    assert find_job_event(1, orders).end == 1
+
+
+def test_task_insertion_in_middle():
+    dag = {9: (10, 11), # some very high rank tasks which all depend on one
+           10: (),      # initial task.
+           11: (),
+
+           1: (), # multiple low rank but cheap tasks
+           2: (),
+          }
 
     orders, _ = schedule(dag, 'ab', compcost, zero_commcost)
 
