@@ -3,6 +3,7 @@ from heft.core import (wbar, cbar, ranku, schedule, Event, start_time,
         sends)
 from functools import partial
 from heft.util import reverse_dict
+from heft.util import find_job_event
 
 def compcost(job, agent):
     if agent.islower():
@@ -140,3 +141,24 @@ def test_one_agent():
     assert orders.keys() == ['A']
     assert set(e.job for e in orders['A']) == set((3,4,5,6,7,8,9))
     assert jobson == {i: 'A' for i in (3,4,5,6,7,8,9)}
+
+
+def test_task_insertion():
+    dag = {9: (10, 11), # some very high rank tasks which all depend on one
+           10: (),      # initial task.
+           11: (),
+
+           1: (), # some low rank but cheap tasks
+           2: (),
+          }
+
+    # No communication cost for simplicity
+    def zero_commcost(ni, nj, A, B):
+        return 0
+
+    orders, _ = schedule(dag, 'ab', compcost, zero_commcost)
+
+    # Both of the cheap tasks (1 and 2) should be done on the second
+    # processor while we are waiting for task 9 to finish on the first one
+    assert find_job_event(1, orders).end == 1
+    assert find_job_event(2, orders).end == 3
