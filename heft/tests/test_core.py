@@ -3,6 +3,7 @@ from heft.core import (wbar, cbar, ranku, schedule, Event, start_time,
         sends)
 from functools import partial
 from heft.util import reverse_dict
+from heft.util import find_job_event
 
 def compcost(job, agent):
     if agent.islower():
@@ -17,6 +18,11 @@ def commcost(ni, nj, A, B):
         return 3
     else:
         return 6
+
+def zero_commcost(ni, nj, A, B):
+    """A free commmunication cost function, useful in some tests for simplicity
+    """
+    return 0
 
 dag = {3: (5,),
        4: (6,),
@@ -59,8 +65,8 @@ def test_earliest_finish_time():
     orders = {'a': [Event(2, 0, 3)], 'b': []}
     jobson = {2: 'a'}
     prec = {3: (2,)}
-    assert start_time(3, orders, jobson, prec, commcost, 'a') == 3
-    assert start_time(3, orders, jobson, prec, commcost, 'b') == 3 + 3
+    assert start_time(3, orders, jobson, prec, commcost, compcost, 'a') == 3
+    assert start_time(3, orders, jobson, prec, commcost, compcost, 'b') == 3 + 3
 
 def test_schedule():
     orders, jobson = schedule(dag, 'abc', compcost, commcost)
@@ -140,3 +146,38 @@ def test_one_agent():
     assert orders.keys() == ['A']
     assert set(e.job for e in orders['A']) == set((3,4,5,6,7,8,9))
     assert jobson == {i: 'A' for i in (3,4,5,6,7,8,9)}
+
+
+def test_task_insertion_at_start():
+    dag = {9: (10, 11), # some very high rank tasks which all depend on one
+           10: (),      # initial task.
+           11: (),
+
+           1: (), # one low rank but cheap tasks
+          }
+
+    orders, _ = schedule(dag, 'ab', compcost, zero_commcost)
+
+    # The cheap task 1 should be done on the spare processor while we are
+    # waiting for task 9 to finish on the first one.
+    assert find_job_event(1, orders).end == 1
+
+
+def test_task_insertion_in_middle():
+    dag = {9: (10, 11), # some very high rank tasks which all depend on one
+           10: (),      # initial task.
+           11: (),
+
+           1: (), # multiple low rank but cheap tasks
+           2: (),
+          }
+
+    orders, _ = schedule(dag, 'ab', compcost, zero_commcost)
+
+    print orders
+    print find_job_event(2, orders)
+
+    # Both of the cheap tasks (1 and 2) should be done on the second
+    # processor while we are waiting for task 9 to finish on the first one
+    assert find_job_event(1, orders).end == 3
+    assert find_job_event(2, orders).end == 2
