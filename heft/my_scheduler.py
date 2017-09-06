@@ -17,7 +17,7 @@ Schedule:
 {1: 'c', 2: 'a', 3: 'c', 4: 'b', 5: 'c', 6: 'b', 7: 'c', 8: 'a', 9: 'b', 10: 'b'}
 """
 
-
+# Create DAG
 dag={1:(2,3,4,5,6),
      2:(8,9),
      3:(7,),
@@ -29,7 +29,7 @@ dag={1:(2,3,4,5,6),
      9:(10,),
      10:()}
 
-
+# Define the cost of each task/job on agent
 def compcost(job, agent):
     if(job==1):
         if(agent=='a'):
@@ -106,7 +106,7 @@ def compcost(job, agent):
 
 
 def commcost(ni, nj, A, B):
-
+# if its the same agent no comm cost
     if(A==B):
         return 0
     else:
@@ -143,7 +143,9 @@ def commcost(ni, nj, A, B):
         else:
             return 0
 
+# The agents here are 'a', 'b' and 'c' which is in the paper is P1, P2, P3 respectively
 orders, jobson = schedule(dag, 'abc', compcost, commcost)
+
 for eachP in sorted(orders):
     print(eachP,orders[eachP])
 print(jobson)
