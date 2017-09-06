@@ -6,6 +6,8 @@ from core import (wbar, cbar, ranku, schedule, Event, start_time,
 This is a simple script to use the HEFT function provided based on the example given in the original HEFT paper.
 You have to define the DAG, compcost function and commcost funtion.
 
+Output:
+
 Ranking:
 [10, 8, 7, 9, 6, 5, 2, 4, 3, 1]
 Schedule:
