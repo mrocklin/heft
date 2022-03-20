@@ -29,6 +29,7 @@ from util import reverse_dict
 from itertools import chain
 
 Event = namedtuple('Event', 'job start end')
+rank_value = {}
 
 def wbar(ni, agents, compcost):
     """ Average computation cost """
@@ -51,15 +52,19 @@ def ranku(ni, agents, succ,  compcost, commcost):
 
     [1]. http://en.wikipedia.org/wiki/Heterogeneous_Earliest_Finish_Time
     """
+    global rank_value
+    if ni in rank_value:
+        return rank_value[ni]
     rank = partial(ranku, compcost=compcost, commcost=commcost,
                            succ=succ, agents=agents)
     w = partial(wbar, compcost=compcost, agents=agents)
     c = partial(cbar, agents=agents, commcost=commcost)
 
     if ni in succ and succ[ni]:
-        return w(ni) + max(c(ni, nj) + rank(nj) for nj in succ[ni])
+        rank_value[ni] = w(ni) + max(c(ni, nj) + rank(nj) for nj in succ[ni])
     else:
-        return w(ni)
+        rank_value[ni] = w(ni)
+    return rank_value[ni]
 
 def endtime(job, events):
     """ Endtime of job in list of events """
@@ -136,6 +141,8 @@ def schedule(succ, agents, compcost, commcost):
     compcost - function :: job, agent -> runtime
     commcost - function :: j1, j2, a1, a2 -> communication time
     """
+    global rank_value
+    rank_value = {}
     rank = partial(ranku, agents=agents, succ=succ,
                           compcost=compcost, commcost=commcost)
     prec = reverse_dict(succ)
